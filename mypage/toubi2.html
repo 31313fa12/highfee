@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高总家的投币机 - 专属定制版</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            color: #fff;
+            font-family: '微软雅黑', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        h1 { color: #ff3366; text-shadow: 0 0 10px #ff3366; margin-bottom: 5px; }
+        .subtitle { color: #aaa; margin-bottom: 20px; font-size: 14px; }
+        .game-wrapper { display: flex; flex-direction: row; gap: 30px; justify-content: center; flex-wrap: wrap; }
+        
+        .slot-machine {
+            background-color: #16213e; border: 5px solid #e94560; border-radius: 15px; 
+            padding: 20px; box-shadow: 0 0 30px #e94560; text-align: center; width: 320px;
+        }
+        .grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .row { display: flex; gap: 10px; justify-content: center; }
+        .reel {
+            width: 70px; height: 80px; background-color: #fff; color: #000;
+            font-size: 40px; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; border: 3px solid #0f3460; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .win-reel { background-color: #ffd700 !important; box-shadow: 0 0 15px #ffd700; transform: scale(1.05); }
+
+        .inserter-panel {
+            background-color: #0f3460; border: 5px solid #4cffd7; border-radius: 15px;
+            padding: 20px; box-shadow: 0 0 30px #4cffd7; display: flex; flex-direction: column;
+            align-items: center; width: 320px;
+        }
+        .mini-game {
+            width: 100%; height: 200px; background-color: #1a1a2e; border: 2px solid #555;
+            border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 20px;
+        }
+        
+        .chute {
+            position: absolute; top: 10px; left: 0; width: 40px;
+            border-top: 35px solid #aaa; border-left: 15px solid transparent; border-right: 15px solid transparent;
+            animation: swing 0.6s infinite ease-in-out alternate; z-index: 10;
+        }
+        .receiver {
+            position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+            width: 40px; height: 30px; border: 4px solid #fca311; border-top: none;
+            border-radius: 0 0 15px 15px; background: rgba(252, 163, 17, 0.4);
+            display: flex; align-items: center; justify-content: center; color: #fca311; font-size: 12px; font-weight: bold;
+        }
+        .falling-coin {
+            position: absolute; width: 30px; height: 30px; font-size: 24px;
+            line-height: 30px; text-align: center; transition: top 0.35s ease-in; z-index: 5;
+        }
+
+        @keyframes swing { 0% { transform: translateX(10px); } 100% { transform: translateX(230px); } }
+
+        button {
+            width: 100%; background-color: #e94560; color: white; border: none;
+            padding: 15px 0; font-size: 20px; font-weight: bold; border-radius: 8px;
+            cursor: pointer; transition: 0.1s;
+        }
+        button:hover { background-color: #ff3366; transform: scale(1.02); }
+        button:active { transform: scale(0.95); }
+
+        #message { margin-top: 15px; font-size: 18px; font-weight: bold; color: #4cffd7; height: 50px; line-height: 1.5; }
+        .queue-box { color: #fca311; font-size: 24px; font-weight: bold; background: #0f3460; padding: 2px 10px; border-radius: 10px; margin-left: 5px;}
+        .stats { margin-top: 20px; font-size: 20px; color: #aaa; background: #16213e; padding: 10px 30px; border-radius: 20px; border: 2px solid #fca311; }
+    </style>
+</head>
+<body>
+
+    <h1>🎩 大魔术师 - 狂暴连发版 🪄</h1>
+    <div class="subtitle">点击任意位置激活音效引擎！尽情疯狂按投币吧！</div>
+    
+    <div class="game-wrapper">
+        <div class="slot-machine">
+            <div class="grid" id="grid">
+                <div class="row" id="row0"><div class="reel" id="r00">🍒</div><div class="reel" id="r01">🍒</div><div class="reel" id="r02">🍒</div></div>
+                <div class="row" id="row1"><div class="reel" id="r10">💎</div><div class="reel" id="r11">💎</div><div class="reel" id="r12">💎</div></div>
+                <div class="row" id="row2"><div class="reel" id="r20">🕊️</div><div class="reel" id="r21">🕊️</div><div class="reel" id="r22">🕊️</div></div>
+            </div>
+            <div id="message">高总家的投币机<br>硬币余额：<span class="queue-box" id="msgCoins">5000</span></div>
+        </div>
+
+        <div class="inserter-panel">
+            <div class="mini-game" id="miniGame">
+                <div class="chute" id="chute"></div>
+                <div class="receiver" id="receiver">IN</div>
+            </div>
+            <button id="dropBtn" onclick="dropCoin()">👇 狂点投币</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        总资产：<span id="coins" style="color: #fca311; font-weight: bold; font-size: 28px;">5000</span> 💰
+    </div>
+
+    <script>
+        // ==========================================
+        // 纯 JS Web Audio API 
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playBeep(freq, type, duration, vol=0.1) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSound(type) {
+            if (type === 'insert') playBeep(800, 'sine', 0.1, 0.2); 
+            else if (type === 'hit') { playBeep(1200, 'square', 0.1, 0.1); setTimeout(()=>playBeep(1600, 'square', 0.1, 0.1), 80); } 
+            else if (type === 'miss') playBeep(200, 'sawtooth', 0.2, 0.1); 
+            else if (type === 'win') { 
+                [523, 659, 783, 1046, 1318].forEach((f, i) => {
+                    setTimeout(() => playBeep(f, 'square', 0.3, 0.15), i * 100);
+                });
+            }
+        }
+
+        // ==========================================
+        // 游戏核心逻辑
+        // ==========================================
+        const symbols = ['🎩', '🕊️', '👑', '💎', '🍎', '🍒']; 
+        let coins = 5000; 
+        
+        let isSpinning = false;
+        let spinQueue = 0; 
+
+        const targetRTP = 0.8; 
+        let internalPool = 1000; 
+
+        function dropCoin() {
+            if (coins <= 0) return; // 没钱了就不执行
+            
+            coins--;
+            updateCoins();
+            playSound('insert'); 
+
+            const chute = document.getElementById('chute');
+            const miniGame = document.getElementById('miniGame');
+            const chuteRect = chute.getBoundingClientRect();
+            const gameRect = miniGame.getBoundingClientRect();
+            
+            const startX = chuteRect.left - gameRect.left + (chuteRect.width / 2) - 15;
+
+            const dropCoinEl = document.createElement('div');
+            dropCoinEl.className = 'falling-coin';
+            dropCoinEl.innerText = '🪙';
+            dropCoinEl.style.left = startX + 'px';
+            dropCoinEl.style.top = '40px'; 
+            miniGame.appendChild(dropCoinEl);
+
+            void dropCoinEl.offsetWidth; 
+            dropCoinEl.style.top = '165px'; 
+
+            setTimeout(() => {
+                const receiver = document.getElementById('receiver');
+                const recRect = receiver.getBoundingClientRect();
+                const coinRect = dropCoinEl.getBoundingClientRect();
+                const coinCenterX = coinRect.left + coinRect.width / 2;
+
+                if (coinCenterX >= recRect.left && coinCenterX <= recRect.right) {
+                    dropCoinEl.innerHTML = '✨';
+                    playSound('hit');
+                    
+                    spinQueue++; 
+                    checkQueue(); 
+                    
+                    setTimeout(() => dropCoinEl.remove(), 200);
+                } else {
+                    dropCoinEl.style.opacity = 0;
+                    playSound('miss');
+                    setTimeout(() => dropCoinEl.remove(), 200);
+                }
+            }, 350);
+        }
+
+        function checkQueue() {
+            if (isSpinning || spinQueue <= 0) return; 
+            spinQueue--;
+            triggerSlotMachine();
+        }
+
+        function triggerSlotMachine() {
+            isSpinning = true;
+            clearHighlights();
+
+            internalPool += (1 * targetRTP); 
+            
+            let finalGrid = generateRandomGrid();
+            let payoutInfo = calculatePayout(finalGrid);
+            
+            if (payoutInfo.totalWin > internalPool) {
+                finalGrid = forceLossGrid();
+                payoutInfo = calculatePayout(finalGrid);
+            } else {
+                internalPool -= payoutInfo.totalWin;
+            }
+
+            let spinsCount = 0;
+            const maxSpins = 12; 
+
+            let interval = setInterval(() => {
+                for(let r=0; r<3; r++) {
+                    for(let c=0; c<3; c++) {
+                        document.getElementById(`r${r}${c}`).innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                    }
+                }
+                spinsCount++;
+
+                if (spinsCount >= maxSpins) {
+                    clearInterval(interval);
+                    
+                    for(let r=0; r<3; r++) {
+                        for(let c=0; c<3; c++) {
+                            document.getElementById(`r${r}${c}`).innerText = finalGrid[r][c];
+                        }
+                    }
+                    finishSpin(payoutInfo);
+                }
+            }, 50);
+        }
+
+        function finishSpin(payoutInfo) {
+            if (payoutInfo.totalWin > 0) {
+                coins += payoutInfo.totalWin;
+                playSound('win'); 
+                
+                payoutInfo.winRows.forEach(rowIndex => {
+                    document.getElementById(`r${rowIndex}0`).classList.add('win-reel');
+                    document.getElementById(`r${rowIndex}1`).classList.add('win-reel');
+                    document.getElementById(`r${rowIndex}2`).classList.add('win-reel');
+                });
+            }
+            // 开奖后立刻同步最新余额
+            updateCoins();
+
+            setTimeout(() => {
+                isSpinning = false;
+                if (spinQueue > 0) {
+                    checkQueue(); 
+                }
+            }, 400);
+        }
+
+        function generateRandomGrid() {
+            let grid = [];
+            for (let i = 0; i < 3; i++) {
+                grid.push([symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)]]);
+            }
+            return grid;
+        }
+
+        function forceLossGrid() {
+            let grid = [];
+            for (let i = 0; i < 3; i++) {
+                let row = [];
+                do {
+                    row = [symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)]];
+                } while (row[0] === row[1] && row[1] === row[2]);
+                grid.push(row);
+            }
+            return grid;
+        }
+
+        function calculatePayout(grid) {
+            let totalWin = 0;
+            let winRows = []; 
+            for(let i=0; i<3; i++) {
+                if(grid[i][0] === grid[i][1] && grid[i][1] === grid[i][2]) {
+                    winRows.push(i);
+                    if (grid[i][0] === '🎩') totalWin += 50; 
+                    else if (grid[i][0] === '💎') totalWin += 30;
+                    else if (grid[i][0] === '👑') totalWin += 20;
+                    else totalWin += 10;
+                }
+            }
+            return { totalWin: totalWin, winRows: winRows };
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.reel').forEach(el => el.classList.remove('win-reel'));
+        }
+        
+        // 核心更新：同步修改两个地方的硬币显示
+        function updateCoins() {
+            document.getElementById('coins').innerText = coins;       // 底部统计区域
+            document.getElementById('msgCoins').innerText = coins;    // 中间提示语区域
+        }
+    </script>
+</body>
+</html>
