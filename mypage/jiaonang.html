@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>疯狂胶囊诊所 - V5 电音版</title>
+    <style>
+        body {
+            background-color: #050510;
+            color: #fff;
+            font-family: 'Arial Black', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 10px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            touch-action: none;
+        }
+        h2 { margin: 5px 0; color: #00ffff; text-shadow: 0 0 10px #00ffff, 2px 2px #ff00ff; font-size: 22px; text-transform: uppercase;}
+        
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            background: linear-gradient(180deg, #1a1a2e, #16213e);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid #0f3460;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,255,255,0.2);
+        }
+
+        .asset-info { font-size: 16px; color: #e94560; }
+        #coin-count { color: #00FF00; font-size: 24px; text-shadow: 0 0 8px #00FF00; }
+        
+        .next-piece-box {
+            background: #000;
+            border: 2px inset #0f3460;
+            border-radius: 5px;
+            width: 50px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px #0f3460;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* --- 游戏网格 (现为10列) --- */
+        .game-frame {
+            background: #111;
+            padding: 6px;
+            border: 3px solid #0f3460;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(15, 52, 96, 0.8), inset 0 0 20px #000;
+        }
+        #game-board {
+            display: grid;
+            grid-template-rows: repeat(16, 22px);
+            grid-template-columns: repeat(10, 22px); /* 老板要求：列数增加2个，变为10列 */
+            background-color: #050505;
+            border: 1px solid #333;
+        }
+        .cell {
+            width: 22px;
+            height: 22px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+        
+        .c1 { background: radial-gradient(circle at 30% 30%, #ff2a2a, #800000); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.6); }
+        .c2 { background: radial-gradient(circle at 30% 30%, #ffea00, #808000); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.6); }
+        .c3 { background: radial-gradient(circle at 30% 30%, #00e5ff, #005580); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.6); }
+        .virus { border-radius: 50%; border: 2px dashed #fff; animation: pulse 0.8s infinite alternate; }
+        @keyframes pulse { from { transform: scale(0.85); box-shadow: 0 0 5px currentColor; } to { transform: scale(1.05); box-shadow: 0 0 15px currentColor; } }
+        
+        .capsule-left { border-radius: 12px 0 0 12px; }
+        .capsule-right { border-radius: 0 12px 12px 0; }
+        .capsule-top { border-radius: 12px 12px 0 0; }
+        .capsule-bottom { border-radius: 0 0 12px 12px; }
+
+        /* --- 3D 街机控制按键 --- */
+        .touch-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1.5fr;
+            gap: 12px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .btn {
+            background: linear-gradient(to bottom, #1a1a2e, #0f3460);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            font-size: 26px;
+            padding: 15px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            user-select: none;
+            box-shadow: 0 6px 0 #051a30, 0 10px 15px rgba(0,255,255,0.2); 
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 #051a30, 0 2px 2px rgba(0,255,255,0.2);
+            background: linear-gradient(to bottom, #0f3460, #1a1a2e);
+        }
+        .btn-rotate { 
+            background: linear-gradient(to bottom, #e94560, #a02040); 
+            border-color: #ffb3c6;
+            color: #fff;
+            box-shadow: 0 6px 0 #501020, 0 10px 15px rgba(233,69,96,0.4);
+        }
+        .btn-rotate:active {
+            box-shadow: 0 0px 0 #501020, 0 2px 2px rgba(233,69,96,0.4);
+            background: linear-gradient(to bottom, #d03050, #801030);
+        }
+        .cost-info { color: #00ffff; font-size: 13px; text-align: center; margin-top: 15px; text-shadow: 0 0 5px #00ffff;}
+        .cost-highlight { color: #ff0055; font-weight: bold; }
+
+        /* --- 能量条 --- */
+        .energy-container {
+            width: 100%;
+            background: rgba(15, 52, 96, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 18px;
+            background: #000;
+            border-radius: 10px;
+            border: 1px inset #555;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0055, #00ffff, #00ff00);
+            width: 0%;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px rgba(0,255,255,0.8);
+        }
+
+        /* --- 全屏老虎机弹窗 --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 5, 20, 0.95);
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: linear-gradient(45deg, #1a0033, #001a33);
+            border: 4px solid #00ffff;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 255, 255, 0.5), inset 0 0 30px #e94560;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.3) rotate(-10deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+        
+        .slot-grid-3x3 {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-template-rows: repeat(3, 80px);
+            gap: 12px;
+            background: #050510;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #0f3460;
+        }
+        .slot-cell {
+            background: linear-gradient(135deg, #111, #333);
+            font-size: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            box-shadow: inset 0 0 20px #000;
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+            border: 1px solid #555;
+        }
+        .win-line { 
+            animation: flashSlot 0.15s infinite alternate; 
+            background: linear-gradient(135deg, #ffff00, #ff8800);
+            box-shadow: 0 0 30px #FFD700, inset 0 0 15px #fff;
+            border-color: #fff;
+        }
+        @keyframes flashSlot { from { transform: scale(1); } to { transform: scale(1.08); } }
+        
+        #modal-title { color: #00ffff; font-size: 30px; margin: 0; text-shadow: 0 0 15px #00ffff; letter-spacing: 2px; }
+        #modal-message { font-size: 22px; color: #ff00ff; margin-top: 10px; min-height: 28px; font-weight: bold; text-shadow: 0 0 10px #ff00ff;}
+
+    </style>
+</head>
+<body>
+
+    <h2>💊 Cyber Clinic V5 💊</h2>
+    
+    <div class="header-panel">
+        <div class="asset-info">
+            💰 资产: <span id="coin-count">20000</span>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <span style="font-size: 10px; color: #00ffff;">NEXT</span>
+            <div class="next-piece-box">
+                <div id="next-c1" class="cell capsule-left"></div>
+                <div id="next-c2" class="cell capsule-right"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="game-frame">
+            <div id="game-board"></div>
+        </div>
+
+        <div style="width: 100%;">
+            <div class="touch-controls">
+                <button class="btn" onclick="playerMove(0, -1)">⬅️</button>
+                <button class="btn" onclick="playerMove(1, 0)">⬇️</button>
+                <button class="btn" onclick="playerMove(0, 1)">➡️</button>
+                <button class="btn btn-rotate" onclick="rotatePiece()">🔄 旋转</button>
+            </div>
+            <div class="cost-info">移动/下落 免费 | 旋转单次 <span class="cost-highlight">扣除 20 币</span></div>
+        </div>
+
+        <div class="energy-container">
+            <div style="font-size: 12px; color: #e94560; font-weight: bold;">⚠️ 单次消除 5 个以上，无视能量直接爆机！ ⚠️</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="energy-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="slot-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">🎰 JACKPOT 🎰</h3>
+            <div class="slot-grid-3x3" id="slotGrid">
+                <div class="slot-cell">🍒</div><div class="slot-cell">🍋</div><div class="slot-cell">🔔</div>
+                <div class="slot-cell">💎</div><div class="slot-cell">7️⃣</div><div class="slot-cell">🍉</div>
+                <div class="slot-cell">🍋</div><div class="slot-cell">🍒</div><div class="slot-cell">💎</div>
+            </div>
+            <div id="modal-message">SYSTEM OVERRIDE...</div>
+        </div>
+    </div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // --- 音效库 ---
+    function playSound(freq, type, duration, vol=0.1) {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + duration);
+    }
+    const s_move = () => playSound(300, 'sine', 0.1, 0.05);
+    const s_rotate = () => playSound(600, 'square', 0.1, 0.05);
+    const s_land = () => playSound(150, 'triangle', 0.15, 0.1);
+    const s_clear = () => { playSound(800, 'sawtooth', 0.15); setTimeout(()=>playSound(1200,'square',0.2),80); };
+    const s_jackpot = () => { for(let i=0;i<25;i++) setTimeout(()=>playSound(600+i*80,'square',0.1, 0.2), i*50); };
+    const s_fail = () => playSound(100, 'sawtooth', 0.6, 0.2);
+
+    // --- 核心：电音 BGM 引擎 ---
+    let bgmStarted = false;
+    function initBGM() {
+        if (bgmStarted) return;
+        bgmStarted = true;
+        if(audioCtx.state === 'suspended') audioCtx.resume();
+
+        // 电音序列 (类似宝石迷阵的琶音节奏)
+        const notes = [220, 261.63, 329.63, 440, 329.63, 261.63, 196, 220]; 
+        let step = 0;
+
+        setInterval(() => {
+            if (audioCtx.state === 'suspended' || isSpinning) return; // 抽奖时自动静音BGM
+            
+            let time = audioCtx.currentTime;
+            
+            // 1. 铺底电子鼓 (Kick) - 每 4 拍一下
+            if (step % 4 === 0) {
+                let kick = audioCtx.createOscillator();
+                let kEnv = audioCtx.createGain();
+                kick.frequency.setValueAtTime(120, time);
+                kick.frequency.exponentialRampToValueAtTime(0.01, time + 0.1);
+                kEnv.gain.setValueAtTime(0.3, time);
+                kEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+                kick.connect(kEnv); kEnv.connect(audioCtx.destination);
+                kick.start(time); kick.stop(time + 0.1);
+            }
+
+            // 2. 动感琶音合成器 (Synth)
+            let synth = audioCtx.createOscillator();
+            let sEnv = audioCtx.createGain();
+            synth.type = 'sawtooth';
+            synth.frequency.setValueAtTime(notes[step % notes.length], time);
+            // 加入一个低通滤波效果 (更有电音感)
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800 + Math.sin(step)*400, time);
+
+            sEnv.gain.setValueAtTime(0.08, time);
+            sEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+
+            synth.connect(filter); filter.connect(sEnv); sEnv.connect(audioCtx.destination);
+            synth.start(time); synth.stop(time + 0.15);
+
+            step++;
+        }, 130); // 130ms = 极快的赛博BPM，催化心流
+    }
+
+    // --- 游戏变量 ---
+    let coins = 20000; 
+    const COST_PER_ROTATE = 20; 
+    let spinCount = 0;
+    let isSpinning = false;
+    let eliminations = 0; 
+    const ELIMINATION_TARGET = 3; 
+    const SYMBOLS = ['🍒', '🍋', '🍉', '🔔', '💎', '7️⃣'];
+    const coinDisplay = document.getElementById('coin-count');
+    const energyBar = document.getElementById('energy-bar');
+    const modal = document.getElementById('slot-modal');
+
+    let nextColors = { c1: Math.floor(Math.random()*3)+1, c2: Math.floor(Math.random()*3)+1 };
+
+    function deductCoins(amount) {
+        if (amount === 0) return true;
+        if (coins >= amount) {
+            coins -= amount; coinDisplay.innerText = coins;
+            return true;
+        }
+        return false;
+    }
+
+    // --- 游戏网格逻辑 (更新为 10 列) ---
+    const ROWS = 16, COLS = 10;
+    let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+    let isVirus = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+    const boardEl = document.getElementById('game-board');
+    let currentPiece = null;
+    let gameInterval = null;
+    let isGameOver = false;
+
+    function initGame() {
+        boardEl.innerHTML = '';
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                let cell = document.createElement('div');
+                cell.classList.add('cell'); cell.id = `cell-${r}-${c}`;
+                boardEl.appendChild(cell);
+                // 病毒散布稍微降低点密度，适应更宽的屏幕
+                if (r > 7 && Math.random() < 0.12) { 
+                    board[r][c] = Math.floor(Math.random() * 3) + 1;
+                    isVirus[r][c] = true;
+                }
+            }
+        }
+        updateNextPreview(); spawnPiece();
+        gameInterval = setInterval(gameLoop, 800);
+    }
+
+    function drawBoard() {
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                const cell = document.getElementById(`cell-${r}-${c}`);
+                cell.className = 'cell';
+                let color = board[r][c];
+                if(color > 0) {
+                    cell.classList.add('c' + color);
+                    if(isVirus[r][c]) cell.classList.add('virus');
+                    if(!isVirus[r][c]) cell.style.borderRadius = "50%"; 
+                } else {
+                    cell.style.borderRadius = "0";
+                }
+            }
+        }
+        if(currentPiece) drawPiece();
+    }
+
+    function drawPiece() {
+        let {r, c, c1, c2, rot} = currentPiece;
+        let p1 = {r:r, c:c}, p2 = {r:r, c:c};
+        let cl1, cl2;
+
+        if(rot === 0) { p2.c = c+1; cl1 = 'capsule-left'; cl2 = 'capsule-right'; }       
+        else if(rot === 1) { p2.r = r+1; cl1 = 'capsule-top'; cl2 = 'capsule-bottom'; }   
+        else if(rot === 2) { p2.c = c+1; cl1 = 'capsule-left'; cl2 = 'capsule-right'; }   
+        else if(rot === 3) { p2.r = r+1; cl1 = 'capsule-top'; cl2 = 'capsule-bottom'; }   
+
+        let col1 = (rot === 0 || rot === 1) ? c1 : c2;
+        let col2 = (rot === 0 || rot === 1) ? c2 : c1;
+
+        const cell1 = document.getElementById(`cell-${p1.r}-${p1.c}`);
+        if(cell1) { cell1.classList.add('c'+col1); cell1.classList.add(cl1); cell1.style.borderRadius="";}
+        const cell2 = document.getElementById(`cell-${p2.r}-${p2.c}`);
+        if(cell2) { cell2.classList.add('c'+col2); cell2.classList.add(cl2); cell2.style.borderRadius="";}
+    }
+
+    function updateNextPreview() {
+        document.getElementById('next-c1').className = `cell capsule-left c${nextColors.c1}`;
+        document.getElementById('next-c2').className = `cell capsule-right c${nextColors.c2}`;
+    }
+
+    function spawnPiece() {
+        // 出生点适应 10 列，放在 c=4 居中
+        currentPiece = { r: 0, c: 4, c1: nextColors.c1, c2: nextColors.c2, rot: 0 };
+        nextColors = { c1: Math.floor(Math.random()*3)+1, c2: Math.floor(Math.random()*3)+1 };
+        updateNextPreview();
+        if(!isValid(0, 4) || !isValid(0, 5)) gameOver();
+        drawBoard();
+    }
+
+    function isValid(r, c) { return r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === 0; }
+
+    function gameLoop() {
+        if(isGameOver || isSpinning || !currentPiece) return;
+        if(!movePiece(1, 0)) lockPiece();
+    }
+
+    function playerMove(dr, dc) {
+        if(isGameOver || isSpinning || !currentPiece) return;
+        // 老板要求：左右移动、下落 全部免费！
+        if(dr !== 1) s_move();
+        movePiece(dr, dc);
+    }
+
+    function movePiece(dr, dc) {
+        let {r, c, rot} = currentPiece;
+        let nr = r + dr, nc = c + dc;
+        let nr2 = nr + (rot % 2 === 0 ? 0 : 1);
+        let nc2 = nc + (rot % 2 === 0 ? 1 : 0);
+
+        if(isValid(nr, nc) && isValid(nr2, nc2)) {
+            currentPiece.r = nr; currentPiece.c = nc;
+            drawBoard(); return true;
+        }
+        return false;
+    }
+
+    function rotatePiece() {
+        if(isGameOver || isSpinning || !currentPiece) return;
+        // 唯独旋转扣费！因为移动免费了，玩家会疯狂调整位置，必须要转
+        if(!deductCoins(COST_PER_ROTATE)) return; 
+
+        let {r, c, rot} = currentPiece;
+        let nextRot = (rot + 1) % 4;
+        let isValidMove = false;
+
+        if (nextRot % 2 === 0) {
+            if (isValid(r, c+1)) isValidMove = true;
+            else if (isValid(r, c-1) && isValid(r, c)) { c = c-1; isValidMove = true; }
+        } else {
+            if (isValid(r+1, c)) isValidMove = true;
+        }
+
+        if(isValidMove) {
+            currentPiece.rot = nextRot; currentPiece.c = c; 
+            s_rotate(); drawBoard();
+        }
+    }
+
+    function lockPiece() {
+        let {r, c, c1, c2, rot} = currentPiece;
+        let r2 = r + (rot % 2 === 0 ? 0 : 1);
+        let c2_pos = c + (rot % 2 === 0 ? 1 : 0);
+        
+        board[r][c] = (rot === 0 || rot === 1) ? c1 : c2;
+        board[r2][c2_pos] = (rot === 0 || rot === 1) ? c2 : c1;
+        
+        s_land(); currentPiece = null; drawBoard(); checkClear(); 
+    }
+
+    function checkClear() {
+        let toClear = new Set();
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<=COLS-4; c++) {
+                let col = board[r][c];
+                if(col === 0) continue;
+                if(board[r][c+1]===col && board[r][c+2]===col && board[r][c+3]===col) 
+                    for(let i=0; i<4; i++) toClear.add(`${r},${c+i}`);
+            }
+        }
+        for(let c=0; c<COLS; c++) {
+            for(let r=0; r<=ROWS-4; r++) {
+                let col = board[r][c];
+                if(col === 0) continue;
+                if(board[r+1][c]===col && board[r+2][c]===col && board[r+3][c]===col) 
+                    for(let i=0; i<4; i++) toClear.add(`${r+i},${c}`);
+            }
+        }
+
+        if(toClear.size > 0) {
+            s_clear();
+            let clearCount = toClear.size;
+            toClear.forEach(key => {
+                let [r, c] = key.split(',').map(Number);
+                board[r][c] = 0; isVirus[r][c] = false;
+            });
+            
+            for(let c=0; c<COLS; c++) {
+                for(let r=ROWS-1; r>=0; r--) {
+                    if(board[r][c] === 0) {
+                        for(let nr=r-1; nr>=0; nr--) {
+                            if(board[nr][c] !== 0 && !isVirus[nr][c]) {
+                                board[r][c] = board[nr][c]; board[nr][c] = 0; break;
+                            }
+                        }
+                    }
+                }
+            }
+            drawBoard();
+
+            // --- 老板的核心逻辑：5个以上直接抽奖！ ---
+            if (clearCount >= 5) {
+                // 直接无视能量条，满级触发！
+                setTimeout(() => startSlotMachineModal(true), 300);
+            } else {
+                // 普通4连消，慢慢攒能量
+                eliminations++; updateEnergyBar();
+                if (eliminations >= ELIMINATION_TARGET) {
+                    setTimeout(() => startSlotMachineModal(false), 300);
+                } else {
+                    setTimeout(checkClear, 400); 
+                }
+            }
+        } else {
+             if(!isSpinning && !currentPiece) spawnPiece();
+        }
+    }
+
+    function updateEnergyBar() {
+        let pct = (eliminations / ELIMINATION_TARGET) * 100;
+        energyBar.style.width = Math.min(pct, 100) + '%';
+    }
+
+    function gameOver() {
+        isGameOver = true; clearInterval(gameInterval);
+        alert("GAME OVER! 诊所已清盘！");
+    }
+
+    // --- 风控抽奖系统 ---
+    function getRiggedOutcome(isSuperTrigger) {
+        spinCount++;
+        // 玩家资产超过 28000，强行断他财路
+        if (coins > 28000) return { win: false, row: -1, symbol: '' }; 
+        // 首抽福利
+        if (spinCount === 1) return { win: true, row: 1, symbol: '7️⃣' }; 
+        
+        // 如果是 5 连消触发的“超级抽奖”，略微调高爆率以资鼓励 (30%)
+        let winRate = isSuperTrigger ? 0.3 : 0.12;
+        
+        if (Math.random() < winRate) {
+            return { win: true, row: Math.floor(Math.random()*3), symbol: SYMBOLS[Math.floor(Math.random()*3)] };
+        }
+        return { win: false, row: -1, symbol: '' };
+    }
+
+    function startSlotMachineModal(isSuperTrigger) {
+        if (isSpinning) return;
+        isSpinning = true;
+        
+        // 如果是正常满能量触发，重置能量条。如果是5连消插队触发，能量条保留！
+        if (!isSuperTrigger) {
+            eliminations = 0; updateEnergyBar();
+        }
+        
+        modal.style.display = 'flex';
+        
+        if (isSuperTrigger) {
+            document.getElementById('modal-message').innerText = "🔥 5连神操作！超级抽奖！ 🔥";
+            document.getElementById('modal-message').style.color = "#ff0000";
+        } else {
+            document.getElementById('modal-message').innerText = "🎰 能量爆发！开奖中... 🎰";
+            document.getElementById('modal-message').style.color = "#00ffff";
+        }
+        
+        let cells = modal.querySelectorAll('.slot-cell');
+        cells.forEach(c => c.classList.remove('win-line'));
+        
+        let spinSoundTimer = setInterval(() => playSound(Math.random()*800+400, 'square', 0.05), 40);
+        let scrollTimer = setInterval(() => {
+            cells.forEach(c => c.innerText = SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
+        }, 50);
+
+        setTimeout(() => {
+            clearInterval(scrollTimer); clearInterval(spinSoundTimer);
+            
+            const outcome = getRiggedOutcome(isSuperTrigger);
+            let finalGrid = [];
+            
+            for (let r = 0; r < 3; r++) {
+                if (outcome.win && outcome.row === r) {
+                    finalGrid.push(outcome.symbol, outcome.symbol, outcome.symbol);
+                } else {
+                    let row = [SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)], SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)], SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)]];
+                    if(row[0]===row[1] && row[1]===row[2]) row[2] = SYMBOLS[(SYMBOLS.indexOf(row[2])+1)%SYMBOLS.length]; 
+                    finalGrid.push(...row);
+                }
+            }
+            
+            cells.forEach((c, i) => c.innerText = finalGrid[i]);
+
+            if (outcome.win) {
+                let prize = outcome.symbol === '7️⃣' ? 3000 : 800;
+                // 如果是超级触发，奖金再多给20%！
+                if(isSuperTrigger) prize = Math.floor(prize * 1.2); 
+                
+                coins += prize; coinDisplay.innerText = coins;
+                s_jackpot();
+                document.getElementById('modal-message').innerText = `🎉 狂暴爆机！获得 ${prize} 币！ 🎉`;
+                document.getElementById('modal-message').style.color = "#00ff00";
+                
+                let startIndex = outcome.row * 3;
+                cells[startIndex].classList.add('win-line');
+                cells[startIndex+1].classList.add('win-line');
+                cells[startIndex+2].classList.add('win-line');
+            } else {
+                s_fail();
+                document.getElementById('modal-message').innerText = "💦 差一点！继续消除再抽！";
+                document.getElementById('modal-message').style.color = "#aaa";
+            }
+
+            setTimeout(() => {
+                modal.style.display = 'none';
+                isSpinning = false;
+                cells.forEach(c => c.classList.remove('win-line'));
+                // 检查是否还有残余的连消
+                if(!currentPiece && !isGameOver) checkClear();
+            }, 2500);
+
+        }, 1500);
+    }
+
+    // 键盘
+    document.addEventListener('keydown', (e) => {
+        if(isSpinning) return;
+        switch(e.key) {
+            case 'ArrowLeft': playerMove(0, -1); break;
+            case 'ArrowRight': playerMove(0, 1); break;
+            case 'ArrowDown': playerMove(1, 0); break; 
+            case 'ArrowUp': rotatePiece(); break;
+        }
+    });
+
+    // 首次点击屏幕激活 BGM 引擎
+    document.body.addEventListener('click', () => { initBGM(); }, {once:true});
+    initGame();
+
+</script>
+</body>
+</html>
