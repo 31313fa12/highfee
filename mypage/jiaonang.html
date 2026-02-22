@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>疯狂胶囊诊所 - V5 电音版</title>
+    <title>高总定制投币机</title>
     <style>
         body {
             background-color: #050510;
@@ -18,7 +18,7 @@
             box-sizing: border-box;
             touch-action: none;
         }
-        h2 { margin: 5px 0; color: #00ffff; text-shadow: 0 0 10px #00ffff, 2px 2px #ff00ff; font-size: 22px; text-transform: uppercase;}
+        h2 { margin: 5px 0; color: #00ffff; text-shadow: 0 0 10px #00ffff, 2px 2px #ff00ff; font-size: 24px; letter-spacing: 2px;}
         
         .header-panel {
             display: flex;
@@ -59,7 +59,7 @@
             max-width: 400px;
         }
 
-        /* --- 游戏网格 (现为10列) --- */
+        /* --- 游戏网格 --- */
         .game-frame {
             background: #111;
             padding: 6px;
@@ -70,7 +70,7 @@
         #game-board {
             display: grid;
             grid-template-rows: repeat(16, 22px);
-            grid-template-columns: repeat(10, 22px); /* 老板要求：列数增加2个，变为10列 */
+            grid-template-columns: repeat(10, 22px);
             background-color: #050505;
             border: 1px solid #333;
         }
@@ -79,6 +79,7 @@
             height: 22px;
             box-sizing: border-box;
             border: 1px solid rgba(255,255,255,0.03);
+            transition: background-color 0.2s; 
         }
         
         .c1 { background: radial-gradient(circle at 30% 30%, #ff2a2a, #800000); box-shadow: inset -2px -2px 4px rgba(0,0,0,0.6); }
@@ -95,7 +96,8 @@
         /* --- 3D 街机控制按键 --- */
         .touch-controls {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1.5fr;
+            grid-template-columns: 1fr 1fr; 
+            grid-template-rows: auto auto; 
             gap: 12px;
             width: 100%;
             margin-top: 5px;
@@ -104,7 +106,7 @@
             background: linear-gradient(to bottom, #1a1a2e, #0f3460);
             border: 1px solid #00ffff;
             color: #00ffff;
-            font-size: 26px;
+            font-size: 22px;
             padding: 15px 0;
             border-radius: 12px;
             cursor: pointer;
@@ -176,13 +178,15 @@
             text-align: center;
             box-shadow: 0 0 60px rgba(0, 255, 255, 0.5), inset 0 0 30px #e94560;
             animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 80%;
+            max-width: 320px;
         }
         @keyframes popIn { from { transform: scale(0.3) rotate(-10deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
         
         .slot-grid-3x3 {
             display: grid;
-            grid-template-columns: repeat(3, 80px);
-            grid-template-rows: repeat(3, 80px);
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 70px);
             gap: 12px;
             background: #050510;
             padding: 15px;
@@ -192,7 +196,7 @@
         }
         .slot-cell {
             background: linear-gradient(135deg, #111, #333);
-            font-size: 45px;
+            font-size: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -209,14 +213,14 @@
         }
         @keyframes flashSlot { from { transform: scale(1); } to { transform: scale(1.08); } }
         
-        #modal-title { color: #00ffff; font-size: 30px; margin: 0; text-shadow: 0 0 15px #00ffff; letter-spacing: 2px; }
-        #modal-message { font-size: 22px; color: #ff00ff; margin-top: 10px; min-height: 28px; font-weight: bold; text-shadow: 0 0 10px #ff00ff;}
+        #modal-title { color: #00ffff; font-size: 26px; margin: 0; text-shadow: 0 0 15px #00ffff; letter-spacing: 2px; }
+        #modal-message { font-size: 18px; color: #ff00ff; margin-top: 10px; min-height: 48px; font-weight: bold; text-shadow: 0 0 10px #ff00ff;}
 
     </style>
 </head>
 <body>
 
-    <h2>💊 Cyber Clinic V5 💊</h2>
+    <h2>🎰 高总定制投币机 🎰</h2>
     
     <div class="header-panel">
         <div class="asset-info">
@@ -238,12 +242,12 @@
 
         <div style="width: 100%;">
             <div class="touch-controls">
-                <button class="btn" onclick="playerMove(0, -1)">⬅️</button>
-                <button class="btn" onclick="playerMove(1, 0)">⬇️</button>
-                <button class="btn" onclick="playerMove(0, 1)">➡️</button>
+                <button class="btn" onclick="playerMove(0, -1)">⬅️ 向左</button>
+                <button class="btn" onclick="playerMove(0, 1)">➡️ 向右</button>
+                <button class="btn" onclick="hardDrop()" style="color: #ffaa00; border-color: #ffaa00;">⬇️ 瞬降到底</button>
                 <button class="btn btn-rotate" onclick="rotatePiece()">🔄 旋转</button>
             </div>
-            <div class="cost-info">移动/下落 免费 | 旋转单次 <span class="cost-highlight">扣除 20 币</span></div>
+            <div class="cost-info">瞬降 <span style="color:#00ff00">+1币</span> | 旋转单次 <span class="cost-highlight">-20 币</span></div>
         </div>
 
         <div class="energy-container">
@@ -271,7 +275,7 @@
     
     // --- 音效库 ---
     function playSound(freq, type, duration, vol=0.1) {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
+        if(audioCtx.state === 'suspended') return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
@@ -283,57 +287,79 @@
     const s_move = () => playSound(300, 'sine', 0.1, 0.05);
     const s_rotate = () => playSound(600, 'square', 0.1, 0.05);
     const s_land = () => playSound(150, 'triangle', 0.15, 0.1);
+    
+    // 已根据高总要求，关闭合成人声 Cool，仅保留瞬降的电子打击音效
+    const s_hard_drop = () => {
+        playSound(200, 'sawtooth', 0.1, 0.2); 
+        playSound(100, 'square', 0.2, 0.3);
+    };
+
     const s_clear = () => { playSound(800, 'sawtooth', 0.15); setTimeout(()=>playSound(1200,'square',0.2),80); };
     const s_jackpot = () => { for(let i=0;i<25;i++) setTimeout(()=>playSound(600+i*80,'square',0.1, 0.2), i*50); };
     const s_fail = () => playSound(100, 'sawtooth', 0.6, 0.2);
+    const s_prop = () => { playSound(1000, 'sine', 0.3); setTimeout(()=>playSound(1500, 'sine', 0.4), 150); };
 
-    // --- 核心：电音 BGM 引擎 ---
+    // --- 核心：电音 BGM 引擎 (高精度调度器) ---
     let bgmStarted = false;
+    let nextNoteTime = 0;
+    let step = 0;
+    const notes = [220, 261.63, 329.63, 440, 329.63, 261.63, 196, 220]; 
+
+    function playBGMStep(time) {
+        if (isSpinning) return; 
+        if (step % 4 === 0) {
+            let kick = audioCtx.createOscillator(); let kEnv = audioCtx.createGain();
+            kick.frequency.setValueAtTime(120, time); kick.frequency.exponentialRampToValueAtTime(0.01, time + 0.1);
+            kEnv.gain.setValueAtTime(0.3, time); kEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+            kick.connect(kEnv); kEnv.connect(audioCtx.destination); kick.start(time); kick.stop(time + 0.1);
+        }
+        let synth = audioCtx.createOscillator(); let sEnv = audioCtx.createGain();
+        synth.type = 'sawtooth'; synth.frequency.setValueAtTime(notes[step % notes.length], time);
+        let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.setValueAtTime(800 + Math.sin(step)*400, time);
+        sEnv.gain.setValueAtTime(0.08, time); sEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
+        synth.connect(filter); filter.connect(sEnv); sEnv.connect(audioCtx.destination);
+        synth.start(time); synth.stop(time + 0.15);
+        step++;
+    }
+
+    function bgmScheduler() {
+        while (nextNoteTime < audioCtx.currentTime + 0.1) {
+            playBGMStep(nextNoteTime);
+            nextNoteTime += 0.13; 
+        }
+        setTimeout(bgmScheduler, 25);
+    }
+
     function initBGM() {
         if (bgmStarted) return;
         bgmStarted = true;
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-
-        // 电音序列 (类似宝石迷阵的琶音节奏)
-        const notes = [220, 261.63, 329.63, 440, 329.63, 261.63, 196, 220]; 
-        let step = 0;
-
-        setInterval(() => {
-            if (audioCtx.state === 'suspended' || isSpinning) return; // 抽奖时自动静音BGM
-            
-            let time = audioCtx.currentTime;
-            
-            // 1. 铺底电子鼓 (Kick) - 每 4 拍一下
-            if (step % 4 === 0) {
-                let kick = audioCtx.createOscillator();
-                let kEnv = audioCtx.createGain();
-                kick.frequency.setValueAtTime(120, time);
-                kick.frequency.exponentialRampToValueAtTime(0.01, time + 0.1);
-                kEnv.gain.setValueAtTime(0.3, time);
-                kEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-                kick.connect(kEnv); kEnv.connect(audioCtx.destination);
-                kick.start(time); kick.stop(time + 0.1);
-            }
-
-            // 2. 动感琶音合成器 (Synth)
-            let synth = audioCtx.createOscillator();
-            let sEnv = audioCtx.createGain();
-            synth.type = 'sawtooth';
-            synth.frequency.setValueAtTime(notes[step % notes.length], time);
-            // 加入一个低通滤波效果 (更有电音感)
-            let filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(800 + Math.sin(step)*400, time);
-
-            sEnv.gain.setValueAtTime(0.08, time);
-            sEnv.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-
-            synth.connect(filter); filter.connect(sEnv); sEnv.connect(audioCtx.destination);
-            synth.start(time); synth.stop(time + 0.15);
-
-            step++;
-        }, 130); // 130ms = 极快的赛博BPM，催化心流
+        nextNoteTime = audioCtx.currentTime + 0.1;
+        bgmScheduler();
     }
+
+    // --- 强制唤醒 iOS/Chrome 音频核心 ---
+    let audioUnlocked = false;
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const buffer = audioCtx.createBuffer(1, 1, 22050);
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start(0);
+        
+        audioUnlocked = true;
+        initBGM();
+        ['click', 'touchstart', 'keydown'].forEach(evt => {
+            document.removeEventListener(evt, unlockAudio);
+        });
+    }
+    ['click', 'touchstart', 'keydown'].forEach(evt => {
+        document.addEventListener(evt, unlockAudio, { once: true });
+    });
+
 
     // --- 游戏变量 ---
     let coins = 20000; 
@@ -341,11 +367,13 @@
     let spinCount = 0;
     let isSpinning = false;
     let eliminations = 0; 
-    const ELIMINATION_TARGET = 3; 
+    const ELIMINATION_TARGET = 6; 
     const SYMBOLS = ['🍒', '🍋', '🍉', '🔔', '💎', '7️⃣'];
     const coinDisplay = document.getElementById('coin-count');
     const energyBar = document.getElementById('energy-bar');
     const modal = document.getElementById('slot-modal');
+    
+    let gameSpeed = 800; 
 
     let nextColors = { c1: Math.floor(Math.random()*3)+1, c2: Math.floor(Math.random()*3)+1 };
 
@@ -358,7 +386,7 @@
         return false;
     }
 
-    // --- 游戏网格逻辑 (更新为 10 列) ---
+    // --- 游戏网格逻辑 ---
     const ROWS = 16, COLS = 10;
     let board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
     let isVirus = Array(ROWS).fill().map(() => Array(COLS).fill(false));
@@ -374,7 +402,6 @@
                 let cell = document.createElement('div');
                 cell.classList.add('cell'); cell.id = `cell-${r}-${c}`;
                 boardEl.appendChild(cell);
-                // 病毒散布稍微降低点密度，适应更宽的屏幕
                 if (r > 7 && Math.random() < 0.12) { 
                     board[r][c] = Math.floor(Math.random() * 3) + 1;
                     isVirus[r][c] = true;
@@ -382,7 +409,7 @@
             }
         }
         updateNextPreview(); spawnPiece();
-        gameInterval = setInterval(gameLoop, 800);
+        gameInterval = setInterval(gameLoop, gameSpeed);
     }
 
     function drawBoard() {
@@ -407,12 +434,10 @@
         let {r, c, c1, c2, rot} = currentPiece;
         let p1 = {r:r, c:c}, p2 = {r:r, c:c};
         let cl1, cl2;
-
         if(rot === 0) { p2.c = c+1; cl1 = 'capsule-left'; cl2 = 'capsule-right'; }       
         else if(rot === 1) { p2.r = r+1; cl1 = 'capsule-top'; cl2 = 'capsule-bottom'; }   
         else if(rot === 2) { p2.c = c+1; cl1 = 'capsule-left'; cl2 = 'capsule-right'; }   
         else if(rot === 3) { p2.r = r+1; cl1 = 'capsule-top'; cl2 = 'capsule-bottom'; }   
-
         let col1 = (rot === 0 || rot === 1) ? c1 : c2;
         let col2 = (rot === 0 || rot === 1) ? c2 : c1;
 
@@ -428,7 +453,6 @@
     }
 
     function spawnPiece() {
-        // 出生点适应 10 列，放在 c=4 居中
         currentPiece = { r: 0, c: 4, c1: nextColors.c1, c2: nextColors.c2, rot: 0 };
         nextColors = { c1: Math.floor(Math.random()*3)+1, c2: Math.floor(Math.random()*3)+1 };
         updateNextPreview();
@@ -445,71 +469,84 @@
 
     function playerMove(dr, dc) {
         if(isGameOver || isSpinning || !currentPiece) return;
-        // 老板要求：左右移动、下落 全部免费！
-        if(dr !== 1) s_move();
+        s_move();
         movePiece(dr, dc);
     }
 
     function movePiece(dr, dc) {
         let {r, c, rot} = currentPiece;
         let nr = r + dr, nc = c + dc;
-        let nr2 = nr + (rot % 2 === 0 ? 0 : 1);
-        let nc2 = nc + (rot % 2 === 0 ? 1 : 0);
-
+        let nr2 = nr + (rot % 2 === 0 ? 0 : 1); let nc2 = nc + (rot % 2 === 0 ? 1 : 0);
         if(isValid(nr, nc) && isValid(nr2, nc2)) {
-            currentPiece.r = nr; currentPiece.c = nc;
-            drawBoard(); return true;
+            currentPiece.r = nr; currentPiece.c = nc; drawBoard(); return true;
         }
         return false;
     }
 
+    function hardDrop() {
+        if(isGameOver || isSpinning || !currentPiece) return;
+        let dropped = false;
+        while(movePiece(1, 0)) { dropped = true; }
+        if(dropped) {
+            coins += 1;
+            coinDisplay.innerText = coins;
+            s_hard_drop(); // 修改这里，调用无配音版本
+        }
+        lockPiece(); 
+    }
+
     function rotatePiece() {
         if(isGameOver || isSpinning || !currentPiece) return;
-        // 唯独旋转扣费！因为移动免费了，玩家会疯狂调整位置，必须要转
         if(!deductCoins(COST_PER_ROTATE)) return; 
-
-        let {r, c, rot} = currentPiece;
-        let nextRot = (rot + 1) % 4;
-        let isValidMove = false;
-
+        let {r, c, rot} = currentPiece; let nextRot = (rot + 1) % 4; let isValidMove = false;
         if (nextRot % 2 === 0) {
             if (isValid(r, c+1)) isValidMove = true;
             else if (isValid(r, c-1) && isValid(r, c)) { c = c-1; isValidMove = true; }
         } else {
             if (isValid(r+1, c)) isValidMove = true;
         }
-
         if(isValidMove) {
-            currentPiece.rot = nextRot; currentPiece.c = c; 
-            s_rotate(); drawBoard();
+            currentPiece.rot = nextRot; currentPiece.c = c; s_rotate(); drawBoard();
         }
     }
 
     function lockPiece() {
         let {r, c, c1, c2, rot} = currentPiece;
-        let r2 = r + (rot % 2 === 0 ? 0 : 1);
-        let c2_pos = c + (rot % 2 === 0 ? 1 : 0);
-        
+        let r2 = r + (rot % 2 === 0 ? 0 : 1); let c2_pos = c + (rot % 2 === 0 ? 1 : 0);
         board[r][c] = (rot === 0 || rot === 1) ? c1 : c2;
         board[r2][c2_pos] = (rot === 0 || rot === 1) ? c2 : c1;
-        
         s_land(); currentPiece = null; drawBoard(); checkClear(); 
+    }
+
+    function applyGravity() {
+        let moved = false;
+        for(let c=0; c<COLS; c++) {
+            for(let r=ROWS-1; r>=0; r--) {
+                if(board[r][c] === 0) {
+                    for(let nr=r-1; nr>=0; nr--) {
+                        if(board[nr][c] !== 0 && !isVirus[nr][c]) {
+                            board[r][c] = board[nr][c]; board[nr][c] = 0;
+                            moved = true; break;
+                        }
+                    }
+                }
+            }
+        }
+        return moved;
     }
 
     function checkClear() {
         let toClear = new Set();
         for(let r=0; r<ROWS; r++) {
             for(let c=0; c<=COLS-4; c++) {
-                let col = board[r][c];
-                if(col === 0) continue;
+                let col = board[r][c]; if(col === 0) continue;
                 if(board[r][c+1]===col && board[r][c+2]===col && board[r][c+3]===col) 
                     for(let i=0; i<4; i++) toClear.add(`${r},${c+i}`);
             }
         }
         for(let c=0; c<COLS; c++) {
             for(let r=0; r<=ROWS-4; r++) {
-                let col = board[r][c];
-                if(col === 0) continue;
+                let col = board[r][c]; if(col === 0) continue;
                 if(board[r+1][c]===col && board[r+2][c]===col && board[r+3][c]===col) 
                     for(let i=0; i<4; i++) toClear.add(`${r+i},${c}`);
             }
@@ -523,25 +560,12 @@
                 board[r][c] = 0; isVirus[r][c] = false;
             });
             
-            for(let c=0; c<COLS; c++) {
-                for(let r=ROWS-1; r>=0; r--) {
-                    if(board[r][c] === 0) {
-                        for(let nr=r-1; nr>=0; nr--) {
-                            if(board[nr][c] !== 0 && !isVirus[nr][c]) {
-                                board[r][c] = board[nr][c]; board[nr][c] = 0; break;
-                            }
-                        }
-                    }
-                }
-            }
+            applyGravity();
             drawBoard();
 
-            // --- 老板的核心逻辑：5个以上直接抽奖！ ---
             if (clearCount >= 5) {
-                // 直接无视能量条，满级触发！
                 setTimeout(() => startSlotMachineModal(true), 300);
             } else {
-                // 普通4连消，慢慢攒能量
                 eliminations++; updateEnergyBar();
                 if (eliminations >= ELIMINATION_TARGET) {
                     setTimeout(() => startSlotMachineModal(false), 300);
@@ -561,42 +585,118 @@
 
     function gameOver() {
         isGameOver = true; clearInterval(gameInterval);
-        alert("GAME OVER! 诊所已清盘！");
+        alert("GAME OVER! 高总投币机已清盘！");
     }
 
-    // --- 风控抽奖系统 ---
+    // --- 高总专属：分级惩罚风控系统 ---
+    function getRandomProp() {
+        const props = ['speed_up', 'drop_3', 'shuffle', 'add_row', 'crazy_drop_1s', 'crazy_drop_2s', 'crazy_drop_3s'];
+        return props[Math.floor(Math.random() * props.length)];
+    }
+
     function getRiggedOutcome(isSuperTrigger) {
         spinCount++;
-        // 玩家资产超过 28000，强行断他财路
-        if (coins > 28000) return { win: false, row: -1, symbol: '' }; 
-        // 首抽福利
-        if (spinCount === 1) return { win: true, row: 1, symbol: '7️⃣' }; 
+        if (coins > 28000) return { win: false, row: -1, symbol: '', prop: getRandomProp() }; 
+        if (spinCount === 1) return { win: true, row: 1, symbol: '7️⃣', prop: null }; 
         
-        // 如果是 5 连消触发的“超级抽奖”，略微调高爆率以资鼓励 (30%)
         let winRate = isSuperTrigger ? 0.3 : 0.12;
-        
         if (Math.random() < winRate) {
-            return { win: true, row: Math.floor(Math.random()*3), symbol: SYMBOLS[Math.floor(Math.random()*3)] };
+            return { win: true, row: Math.floor(Math.random()*3), symbol: SYMBOLS[Math.floor(Math.random()*3)], prop: null };
         }
-        return { win: false, row: -1, symbol: '' };
+        
+        let prop = Math.random() < 0.6 ? getRandomProp() : null;
+        return { win: false, row: -1, symbol: '', prop: prop };
+    }
+
+    function executeDrop3() {
+        for(let i=0; i<6; i++) {
+            let c = Math.floor(Math.random() * COLS);
+            let color = Math.floor(Math.random() * 3) + 1;
+            let placed = false;
+            for(let r=0; r<ROWS; r++) {
+                if (board[r][c] !== 0) {
+                    if (r > 0) { board[r-1][c] = color; isVirus[r-1][c] = false; placed = true; }
+                    break;
+                }
+            }
+            if (!placed) { board[ROWS-1][c] = color; isVirus[ROWS-1][c] = false; }
+        }
+        applyGravity();
+    }
+
+    function executeShuffle() {
+        let blocks = [];
+        for(let r=0; r<ROWS; r++){
+            for(let c=0; c<COLS; c++){
+                if(board[r][c] > 0) {
+                    blocks.push({col: board[r][c], vir: isVirus[r][c]});
+                    board[r][c] = 0; isVirus[r][c] = false;
+                }
+            }
+        }
+        blocks.sort(() => Math.random() - 0.5);
+        let bIdx = 0;
+        for (let r = ROWS - 1; r >= 0 && bIdx < blocks.length; r--) {
+            let randomCols = [0,1,2,3,4,5,6,7,8,9].sort(() => Math.random() - 0.5);
+            for(let c of randomCols) {
+                if (bIdx < blocks.length) {
+                    board[r][c] = blocks[bIdx].col;
+                    isVirus[r][c] = blocks[bIdx].vir;
+                    bIdx++;
+                }
+            }
+        }
+        applyGravity();
+    }
+
+    function executeAddRow() {
+        for(let c=0; c<COLS; c++) {
+            if(board[0][c] !== 0 || board[1][c] !== 0) {
+                gameOver(); return;
+            }
+        }
+        for(let r=1; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                board[r-1][c] = board[r][c];
+                isVirus[r-1][c] = isVirus[r][c];
+            }
+        }
+        for(let c=0; c<COLS; c++) {
+            board[ROWS-1][c] = Math.floor(Math.random() * 3) + 1;
+            isVirus[ROWS-1][c] = false;
+        }
+        applyGravity();
+    }
+
+    function executeCrazyDrop(duration) {
+        if(!currentPiece && !isGameOver) spawnPiece();
+        clearInterval(gameInterval);
+        
+        gameInterval = setInterval(gameLoop, 80); 
+        
+        setTimeout(() => {
+            if(!isGameOver) {
+                clearInterval(gameInterval);
+                if (!isSpinning) {
+                    gameInterval = setInterval(gameLoop, gameSpeed);
+                }
+            }
+        }, duration);
     }
 
     function startSlotMachineModal(isSuperTrigger) {
         if (isSpinning) return;
         isSpinning = true;
+        clearInterval(gameInterval); 
         
-        // 如果是正常满能量触发，重置能量条。如果是5连消插队触发，能量条保留！
-        if (!isSuperTrigger) {
-            eliminations = 0; updateEnergyBar();
-        }
-        
+        if (!isSuperTrigger) { eliminations = 0; updateEnergyBar(); }
         modal.style.display = 'flex';
         
         if (isSuperTrigger) {
-            document.getElementById('modal-message').innerText = "🔥 5连神操作！超级抽奖！ 🔥";
+            document.getElementById('modal-message').innerHTML = "🔥 5连神操作！<br>超级爆机！ 🔥";
             document.getElementById('modal-message').style.color = "#ff0000";
         } else {
-            document.getElementById('modal-message').innerText = "🎰 能量爆发！开奖中... 🎰";
+            document.getElementById('modal-message').innerText = "🎰 能量爆发！摇奖中... 🎰";
             document.getElementById('modal-message').style.color = "#00ffff";
         }
         
@@ -610,7 +710,6 @@
 
         setTimeout(() => {
             clearInterval(scrollTimer); clearInterval(spinSoundTimer);
-            
             const outcome = getRiggedOutcome(isSuperTrigger);
             let finalGrid = [];
             
@@ -623,17 +722,14 @@
                     finalGrid.push(...row);
                 }
             }
-            
             cells.forEach((c, i) => c.innerText = finalGrid[i]);
 
             if (outcome.win) {
                 let prize = outcome.symbol === '7️⃣' ? 3000 : 800;
-                // 如果是超级触发，奖金再多给20%！
                 if(isSuperTrigger) prize = Math.floor(prize * 1.2); 
                 
-                coins += prize; coinDisplay.innerText = coins;
-                s_jackpot();
-                document.getElementById('modal-message').innerText = `🎉 狂暴爆机！获得 ${prize} 币！ 🎉`;
+                coins += prize; coinDisplay.innerText = coins; s_jackpot();
+                document.getElementById('modal-message').innerHTML = `🎉 狂暴爆机！<br>获得 ${prize} 币！ 🎉`;
                 document.getElementById('modal-message').style.color = "#00ff00";
                 
                 let startIndex = outcome.row * 3;
@@ -641,35 +737,67 @@
                 cells[startIndex+1].classList.add('win-line');
                 cells[startIndex+2].classList.add('win-line');
             } else {
-                s_fail();
-                document.getElementById('modal-message').innerText = "💦 差一点！继续消除再抽！";
-                document.getElementById('modal-message').style.color = "#aaa";
+                if (outcome.prop) {
+                    s_prop();
+                    if (outcome.prop === 'speed_up') {
+                        gameSpeed = Math.max(200, gameSpeed - 100);
+                        document.getElementById('modal-message').innerHTML = `⚡ 机器暴走 ⚡<br>下落速度永久增加！`;
+                        document.getElementById('modal-message').style.color = "#ff8800";
+                    } else if (outcome.prop === 'drop_3') {
+                        executeDrop3(); drawBoard();
+                        document.getElementById('modal-message').innerHTML = "⚠️ 惩罚：天降危机 ⚠️<br>强行砸下 3 个胶囊！";
+                        document.getElementById('modal-message').style.color = "#ff4400";
+                    } else if (outcome.prop === 'shuffle') {
+                        executeShuffle(); drawBoard();
+                        document.getElementById('modal-message').innerHTML = "🌀 空间扭曲 🌀<br>所有胶囊重新排列！";
+                        document.getElementById('modal-message').style.color = "#ff00ff";
+                    } else if (outcome.prop === 'add_row') {
+                        executeAddRow(); drawBoard();
+                        document.getElementById('modal-message').innerHTML = "💀 惩罚：底盘抬升 💀<br>底部增加一行障碍！";
+                        document.getElementById('modal-message').style.color = "#ff0000";
+                    } else if (outcome.prop.startsWith('crazy_drop')) {
+                        let seconds = outcome.prop === 'crazy_drop_1s' ? 1 : (outcome.prop === 'crazy_drop_2s' ? 2 : 3);
+                        document.getElementById('modal-message').innerHTML = `🌪️ 惩罚：疯狂模式 🌪️<br>地心引力暴增 ${seconds} 秒！`;
+                        document.getElementById('modal-message').style.color = "#ff0000";
+                    }
+                } else {
+                    s_fail();
+                    document.getElementById('modal-message').innerText = "💦 啥都没中！继续努力！";
+                    document.getElementById('modal-message').style.color = "#aaa";
+                }
             }
 
             setTimeout(() => {
                 modal.style.display = 'none';
                 isSpinning = false;
                 cells.forEach(c => c.classList.remove('win-line'));
-                // 检查是否还有残余的连消
-                if(!currentPiece && !isGameOver) checkClear();
+                
+                if (outcome && outcome.prop && outcome.prop.startsWith('crazy_drop')) {
+                    let duration = outcome.prop === 'crazy_drop_1s' ? 1000 : (outcome.prop === 'crazy_drop_2s' ? 2000 : 3000);
+                    executeCrazyDrop(duration);
+                    if(!currentPiece && !isGameOver) checkClear();
+                } else {
+                    if(!currentPiece && !isGameOver) {
+                        checkClear(); 
+                    }
+                    gameInterval = setInterval(gameLoop, gameSpeed);
+                }
             }, 2500);
 
         }, 1500);
     }
 
-    // 键盘
+    // 键盘支持
     document.addEventListener('keydown', (e) => {
         if(isSpinning) return;
         switch(e.key) {
             case 'ArrowLeft': playerMove(0, -1); break;
             case 'ArrowRight': playerMove(0, 1); break;
-            case 'ArrowDown': playerMove(1, 0); break; 
+            case 'ArrowDown': hardDrop(); break; 
             case 'ArrowUp': rotatePiece(); break;
         }
     });
 
-    // 首次点击屏幕激活 BGM 引擎
-    document.body.addEventListener('click', () => { initBGM(); }, {once:true});
     initGame();
 
 </script>
